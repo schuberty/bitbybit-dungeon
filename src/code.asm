@@ -128,8 +128,8 @@ genRmMinRooms:	syscall		# $t0 = (int)(2 < x < 7)
 	blt  $a0, 3, genRmMinRooms	#
 	move $t0, $a0		# Salva $t0
 	li   $t5, 8		# Começa a desenhar as salas
-genRmLoop1_1:	sw   $t2, ($t1)
-	li   $t6, 8
+genRmLoop1_1:	sw   $t2, ($t1)		
+	li   $t6, 8	
 genRmLoop1_2:	add  $t1, $t1, 4
 	sw   $t3, ($t1)
 	add  $t6, $t6, -1
@@ -139,15 +139,15 @@ genRmLoop1_2:	add  $t1, $t1, 4
 	add  $t1, $t1, 220
 	add  $t5, $t5, -1
 	bnez $t5, genRmLoop1_1
-			
-	
-	
-	
-	
-	
-	
-	
-	
+	li   $t5, 2
+genRmLoop2_1:	li   $t6, 10
+genRmLoop2_2:	sw   $t2, ($t1)
+	add  $t1, $t1, 4
+	add  $t6, $t6, -1
+	bnez $t6, genRmLoop2_2
+	add  $t1, $t1, -2344
+	add  $t5, $t5, -1
+	bnez $t5, genRmLoop2_1
 	jr   $ra		#
 #################################################
 # Sai do programa		#
