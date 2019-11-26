@@ -131,34 +131,46 @@ MPLoop3:
 #########################################
 # Gera a sala da dungeon		#
 gen_Room:				#
-	li   $t0, 0x10040000		# Buffer
-	add  $t0, $t0, 1032
-	li   $t1, 0x47475D		# Cores das salas
-	li   $t2, 0xB8B06C
-	li   $t3, 0xA59E62
-	li   $t4, 2			# Dividor do random int gerado
-	li   $t6, 25			
+	li    $t0, 0x10040000		# Buffer
+	add   $t0, $t0, 1032
+	li    $t1, 0x47475D		# Cores das salas
+	li    $t2, 0xB8B06C
+	li    $t3, 0xA59E62
+	li    $t4, 2			# Dividor do random int gerado
+	li    $t6, 25			
 roomLoop1:
-	sw   $t1, ($t0)
-	add  $t0, $t0, 4
-	li   $t5, 42
+	sw    $t1, ($t0)
+	add   $t0, $t0, 4
+	li    $t5, 42
 roomLoop2:
-	li   $v0, 41			# Random int code
+	li    $v0, 41			# Random int code
 	syscall
-	div  $a0, $t4
-	mfhi $a0
-	beqz $a0, roomColor2
-	sw   $t2, ($t0)
+	div   $a0, $t4
+	mfhi  $a0
+	beqz  $a0, roomColor2
+	sw    $t2, ($t0)
 	j    roomNext
 roomColor2:
-	sw   $t3, ($t0)
+	sw    $t3, ($t0)
 roomNext:
-	add  $t0, $t0, 4
-	add  $t5, $t5, -1
-	bnez $t5, roomLoop2
-	sw   $t1, ($t0)
-	add  $t0, $t0, 84
-	add  $t6, $t6, -1
-	bnez $t6, roomLoop1
-
-	jr   $ra
+	add   $t0, $t0, 4
+	add   $t5, $t5, -1
+	bnez  $t5, roomLoop2
+	sw    $t1, ($t0)
+	add   $t0, $t0, 84
+	add   $t6, $t6, -1
+	bnez  $t6, roomLoop1
+	li    $t6, 2
+roomLoop3:
+	li    $t5, 44
+roomLoop4:
+	sw    $t1, ($t0)
+	add   $t5, $t5, -1
+	add   $t0, $t0, 4
+	bnez  $t5, roomLoop4
+	add   $t6, $t6, -1
+	add   $t0, $t0, -6832
+	bnez  $t6, roomLoop3
+	jr    $ra
+#########################################
+# 					#
