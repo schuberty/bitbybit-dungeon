@@ -11,7 +11,7 @@ bitmapDisplay_Configuration:
 	
 	jal   gen_Background
 	jal   gen_HealthPoints
-	jal   gen_ManaPoints2
+	jal   gen_ManaPoints
 	jal   gen_Room
 	
 	lw    $ra, ($sp)
@@ -91,11 +91,11 @@ HPLoop3:
 	jr    $ra
 #########################################
 # Gera o desenho inicial dos MP		#
-gen_ManaPoints:
+gen_ManaPoints2:
 	jr    $ra
 #########################################
 # Gera o desenho inicial dos MP		#
-gen_ManaPoints2:			#
+gen_ManaPoints:			#
 	li    $t0, 0x10040000		# Carrega o buffer para desenhar a mana inicial
 	add   $t0, $t0, 488
 	li    $t1, 0x000FFF		# Cores da mana
