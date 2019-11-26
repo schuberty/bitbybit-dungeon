@@ -24,6 +24,7 @@ gen_Background:				#
 	li    $t0, 0x10040000		# Buffer para preencher fundo
 	li    $t1, 48			# Numero de pixels preenchidos
 	li    $t2, 3			# Divisor do random int
+	li    $t4, 0			# Valor zerado
 	li    $t5, 0x452500		# Cores do background
 	li    $t6, 0x663E11
 	li    $t7, 0x42311F

@@ -1,7 +1,9 @@
 .globl main,stop
+.globl playerName,playerColor
 
 .data
-
+playerName:	.space 64
+playerColor:	.space 4
 .text
 main:
 	jal  display_Menus

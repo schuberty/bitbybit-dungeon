@@ -7,8 +7,15 @@ stringConfig:	.ascii  "    Settings do MARS necessárias,\nfora do padrão:\n\n1
 stringMMIO:	.ascii  "    Modo de uso do Keyboard MMIO Simulator:\n1. Teclas W e S para movimentação vertical;\n2. Teclas A e D para movimentação horizental;\n3. Tecla E para enter ou ação;\n4. Tecla Q para voltar ou parar movimentação."
 		.asciiz "\n\n                          BOM JOGO!"
 
-stringMenu:	.ascii  "\tBit by Bit Dungeon MENU:\n\n1. Entrar na masmorra.\n2. Sair do menu."
-		.asciiz "\n\n Digite sua escolha > "
+stringMenu:	.asciiz  "\tBit by Bit Dungeon MENU:\n\n"
+menuOpt1:	.asciiz "\tEntrar na Masmorra\n"
+menuOpt2:	.asciiz "\tSelecionar Dificuldade\n"
+menuOpt3:	.asciiz "\tSair do Jogo\n"
+selectedOpt:	.asciiz "   >"
+	
+playerGetName:	.asciiz "Player Name: "
+playerGetColor: .asciiz ""
+
 
 
 .text
@@ -16,8 +23,9 @@ display_Menus:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
 	
-	jal   msg_Config
+#	jal   msg_Config
 	jal   MMIO_MainMenu
+	jal   MMIO_GetPlayer
 	jal   msg_Prologue
 	
 	lw    $ra, ($sp)
@@ -44,19 +52,62 @@ MMIO_MainMenu:				#
 	lui   $t0, 0xffff		# Valor do Transmitter Controller Ready bit
 	li    $t1, 1			# Posicionado para 1 manualmente
 	sb    $t1, 8($t0)		# E armazenado na posição especifica
+	li    $t2, 0			# Valor salvo pro Ready Transmitter
+	li    $t3, 1			# Valor inicial da opção do menu selecionada
 
 	add   $t1, $t1, 11
-getMenuValue:
+menuSelection:
 	sw    $t1, 12($t0)		# ASCII 12 da clear na MMIO Display
 	la    $a1, stringMenu		# Valor á enviar na MMIO Display
 	jal   MMIO_sendToDisplay
-	sw    $zero, 4($t0)
+#	sw    $zero, 4($t0)
+	li    $t4, 1
+	jal   printSelection
+	la    $a1, menuOpt1
+	jal   MMIO_sendToDisplay
+	li    $t4, 2
+	jal   printSelection
+	la    $a1, menuOpt2
+	jal   MMIO_sendToDisplay
+	li    $t4, 3
+	jal printSelection
+	la    $a1, menuOpt3
+	jal   MMIO_sendToDisplay
 	
 	jal   MMIO_GetChar
-	beq   $v0, '2', stop
-	bne   $v0, '1', getMenuValue
-	jal   MMIO_SendChar
-	
+	beq   $v0, 'e', keyEnter
+	beq   $v0, 'E', keyEnter
+	beq   $v0, 'w', keyUp
+	beq   $v0, 'W', keyUp
+	beq   $v0, 's', keyDown
+	beq   $v0, 'S', keyDown
+	j     menuSelection
+
+keyDown:
+	bge   $t3, 3, menuSelection
+	add   $t3, $t3, 1
+	j     menuSelection
+keyUp:
+	ble   $t3, 1, menuSelection
+	add   $t3, $t3, -1
+	j     menuSelection
+changeDifficult:
+	j     menuSelection
+printSelection:
+	addiu $sp, $sp, -4
+	sw    $ra, ($sp)
+
+	sub   $t4, $t4, $t3
+	bnez  $t4, printNext
+	la    $a1, selectedOpt
+	jal   MMIO_sendToDisplay
+printNext:
+	lw    $ra, ($sp)
+	addiu $sp, $sp, 4
+	jr    $ra
+keyEnter:
+	beq   $t3, 2, changeDifficult
+	beq   $t3, 3, stop
 	lw    $ra, ($sp)		# Retorno da pilha
 	addiu $sp, $sp, 4
 	jr    $ra
@@ -95,6 +146,18 @@ inputReady:
 	andi  $t2, $t2, 0x1
 	beqz  $t2, inputReady
 	lw    $v0, 4($a3)
+	jr    $ra
+#########################################
+#					#
+MMIO_GetPlayer:
+	addiu $sp, $sp, -4
+	sw    $ra, ($sp)
+	
+getNameLoop:
+
+	
+	lw    $ra, ($sp)
+	addiu $sp, $sp, 4
 	jr    $ra
 #########################################
 #					#
