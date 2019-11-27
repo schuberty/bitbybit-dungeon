@@ -1,4 +1,4 @@
-.globl bitmapDisplay_Configuration
+.globl bitmapDisplay_Configuration,genOnlyRoomPar
 
 .data
 HPColor:	.word 0xFF0000, 0xD3A4A4
@@ -12,7 +12,9 @@ bitmapDisplay_Configuration:
 	jal   gen_Background
 	jal   gen_HealthPoints
 	jal   gen_ManaPoints
+genOnlyRoomPar:
 	jal   gen_Room
+	jal   gen_En
 	
 	lw    $ra, ($sp)
 	addiu $sp, $sp, 4
@@ -28,6 +30,7 @@ gen_Background:				#
 	li    $t5, 0x452500		# Cores do background
 	li    $t6, 0x663E11
 	li    $t7, 0x42311F
+	li    $t8, 0xFFFFFF
 	li    $v0, 41			# Random int code
 bgLoop:
 	syscall	
@@ -53,7 +56,7 @@ bgNext2:
 	blt   $t4, 1537, bgLoop		# Checa se preencheu toda a area do mapa
 	jr    $ra
 bgSkipStatus:
-	add   $t0, $t0, 68		# Incrementa para a proxima linha por ser a area dos status
+	add   $t0, $t0, 68
 	j     bgNext2			#
 #########################################
 # Gera o desenho inicial dos HP		#
@@ -89,10 +92,6 @@ HPLoop3:
 	add   $t0, $t0, 4
 	add   $t3, $t3, -1
 	bnez  $t3, HPLoop3
-	jr    $ra
-#########################################
-# Gera o desenho inicial dos MP		#
-gen_ManaPoints2:
 	jr    $ra
 #########################################
 # Gera o desenho inicial dos MP		#
@@ -175,3 +174,34 @@ roomLoop4:
 	jr    $ra
 #########################################
 # 					#
+gen_En:
+	li    $t0, 4
+EnLoop1:
+	li    $v0, 41
+	syscall
+	div   $a0, $t0
+	mfhi  $a0
+	ble   $a0, 1, EnLoop1
+	addi  $t0, $t0, 1
+	move  $t0, $t1
+	li    $t2, 0xFF0000	# En color
+	lui   $t3, 0x1004
+	addi  $t3, $t3, 1336
+	move  $t4, $t3		# Posição principal EN
+	li    $t5, 3
+EnLoop2:
+	li    $t6, 3
+EnLoop3:
+	sw    $t2, ($t3)
+	add   $t3, $t3, 4
+	add   $t6, $t6, -1
+	bnez  $t6, EnLoop3
+	add   $t3, $t3, 244
+	add   $t5, $t5, -1
+	bnez  $t5, EnLoop2
+	
+	
+	jr    $ra
+	
+
+		
