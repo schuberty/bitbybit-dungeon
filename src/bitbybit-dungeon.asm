@@ -3,7 +3,8 @@
 
 .data
 playerName:	.space 64
-playerConfig:	.word 
+#		     [HP,MP,Shield,NumHammers,ifHelmet,ifBody,ifLegs,ifShoes,ifSword,ifSpell]
+playerAtt:	.word 20, 20, 0, 0, 0, 0, 0, 0, 0, 0
 .text
 main:
 	jal  display_Menus
@@ -40,7 +41,6 @@ zeroAll:
 	li   $s7, 0
 	li   $t8, 0
 	li   $t9, 0
-	li   $sp, 0x7fffeffc
 	jr   $ra
 #########################################
 # Para o programa			#

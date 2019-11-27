@@ -1,13 +1,14 @@
 .globl start_Game
 
 .data
-
+stringHeader:	.asciiz "TEst"
 .text
 start_Game:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
 	
 	jal   Player_Movement
+	jal   Enter_B
 	
 	lw    $ra, ($sp)
 	addiu $sp, $sp, 4
@@ -16,11 +17,10 @@ start_Game:
 #########################################################
 # -Realiza o movimento do jogador pela sala		#
 # @return : quando encontra um inimigo ou;		#
-# @return : quando descobre um buraco na parede.
+# @return : quando descobre um buraco na parede.	#
 Player_Movement:
 	addiu $sp, $sp, -4		# Pilha pro retorno
 	sw    $ra, ($sp)
-	
 	
 	lui   $s0, 0x1004
 	addi  $s0, $s0, 1296
@@ -34,7 +34,7 @@ Player_Movement:
 	sw    $t1, ($t0)
 	add   $t0, $t0, 4
 	sw    $t1, ($t0)
-	
+
 movementLoop:
 	jal   MMIO_GetChar		# Em $v0 está o valor ASCII de movimento
 	move  $t3, $v0			# Salva o valor
@@ -73,8 +73,8 @@ foundedEnemy:
 		beq   $t5, 0xFF0000, foundedEnemy	# Se for um inimigo
 		addi  $t0, $t0, 256
 		lw    $t5, ($t0)
-		beq   $t5, 0x47475D, movementLoop	# Se for uma parede
-		beq   $t5, 0xFF0000, foundedEnemy	# Se for um inimigo
+		beq   $t5, 0x47475D, movementLoop
+		beq   $t5, 0xFF0000, foundedEnemy
 		sw    $t1, ($t0)			# Move o jogador
 		addi  $t0, $t0, -8
 		sw    $t2, ($t0)
@@ -154,11 +154,26 @@ foundedEnemy:
 		j     movementLoop
 
 
+#########################################################
+# -Inicia combate com um inimigo			#
+# @return : quando o jogador ou o inimigo morre		#
+Enter_B:
+	addiu $sp, $sp, -4
+	sw    $ra, ($sp)
+	
+	jal   zeroAll
+	lui   $t0, 0xffff
+	li    $t1, 12
+	sw    $t1, 12($t0)
+	la    $a1, stringHeader
+	jal   MMIO_sendToDisplay
 	
 	
 	
 	
-	
+	lw    $ra, ($sp)
+	addiu $sp, $sp 4
+	jr    $ra
 	
 	
 	

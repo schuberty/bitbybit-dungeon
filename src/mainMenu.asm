@@ -25,7 +25,7 @@ display_Menus:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
 	
-	jal   msg_Config
+#	jal   msg_Config
 	jal   MMIO_MainMenu
 	jal   MMIO_GetPlayer
 	jal   msg_Prologue
