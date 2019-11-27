@@ -1,4 +1,4 @@
-.globl display_Menus
+.globl display_Menus,MMIO_sendToDisplay,MMIO_GetChar
 
 .data
 stringWelcome:	.asciiz "        Bit by Bit: A Dungeon Game\n\n            Trabalho Final de AOC I\nDesenvolvido por: Gabriel Schubert M."
@@ -8,12 +8,14 @@ stringMMIO:	.ascii  "    Modo de uso do Keyboard MMIO Simulator:\n1. Teclas W e 
 		.asciiz "\n\n                          BOM JOGO!"
 
 stringMenu:	.asciiz  "\tBit by Bit Dungeon MENU:\n\n"
-menuOpt1:	.asciiz "\tEntrar na Masmorra\n"
-menuOpt2:	.asciiz "\tSelecionar Dificuldade\n"
-menuOpt3:	.asciiz "\tSair do Jogo\n"
-selectedOpt:	.asciiz "   >"
-	
-playerGetName:	.asciiz "Player Name: "
+menuOpt1:	.asciiz "\t   Entrar na Masmorra\n"
+menuOpt2:	.asciiz "\t Selecionar Dificuldade\n"
+menuOpt3:	.asciiz "\t      Sair do Menu"
+selectedOpt:	.asciiz "      >"
+
+
+
+playerGetName:	.asciiz "Diga-me, aventureiro de uma terra distante chamada Pelota"
 playerGetColor: .asciiz ""
 
 
@@ -23,7 +25,7 @@ display_Menus:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
 	
-#	jal   msg_Config
+	jal   msg_Config
 	jal   MMIO_MainMenu
 	jal   MMIO_GetPlayer
 	jal   msg_Prologue
@@ -44,8 +46,9 @@ msg_Config:				#
 	la    $a0, stringMMIO
 	syscall
 	jr    $ra
-#########################################
-# Mostra o Main Menu no inicio do 	#
+#########################################################
+# -Mostra o menu principal, para o jogador, com opções	#
+# de inciar a masmorra, selecionar dificuldade ou sair	#
 MMIO_MainMenu:				#
 	addiu $sp, $sp, -4		# Pilha pro retorno
 	sw    $ra, ($sp)
@@ -73,7 +76,6 @@ menuSelection:
 	jal printSelection
 	la    $a1, menuOpt3
 	jal   MMIO_sendToDisplay
-	
 	jal   MMIO_GetChar
 	beq   $v0, 'e', keyEnter
 	beq   $v0, 'E', keyEnter
@@ -112,9 +114,9 @@ keyEnter:
 	addiu $sp, $sp, 4
 	jr    $ra
 	
-#########################################
-# Processo de enviar string pro MMIO	#
-# Endereço da string em $a1		#
+#########################################################
+# -Percorre uma string para enviar ao MMIO Display	#
+# @param $a1 : string 					#
 MMIO_sendToDisplay:			#
 	addiu $sp, $sp, -4		# Pilha pro retorno
 	sw    $ra, ($sp)
@@ -127,8 +129,9 @@ toDisplayLoop:
 	addiu $sp, $sp, 4
 	jr    $ra
 
-#########################################
-# Envia o char armazenado em $a0	#
+#########################################################
+# Envia o caractere especificado para o MMIO Display	#
+# @param $a0 : char, valor ASCII			#
 MMIO_SendChar:				#
 	lui   $a3, 0xffff		# Carrega o endereço base
 sendCursor:				# Loop desabilitado, Transmitter bit habilitado em MMIO_MainMenu
@@ -137,18 +140,20 @@ sendCursor:				# Loop desabilitado, Transmitter bit habilitado em MMIO_MainMenu
 	beqz  $t2, sendCursor		# Espera primeiro input pra estar disponível (RESET)
 	sw    $a0, 12($a3)		# Envia o char pra posição de envio
 	jr    $ra			# Retorna
-#########################################
-#					#
+#########################################################
+# -Intercepta um caractere enviado pelo MMIO Keyboard	#
+# @return $v0 : char, valor ASCII			#							#
 MMIO_GetChar:
 	lui   $a1, 0xffff
 inputReady:
-	lw    $t2, 0($a3)
-	andi  $t2, $t2, 0x1
-	beqz  $t2, inputReady
-	lw    $v0, 4($a3)
+	lw    $a2, 0($a1)
+	andi  $a2, $a2, 0x1
+	beqz  $a2, inputReady
+	lw    $v0, 4($a1)
 	jr    $ra
-#########################################
-#					#
+#########################################################
+# -Intercepta um caractere enviado pelo MMIO Keyboard	#
+# @return $v0 : char, valor ASCII		#
 MMIO_GetPlayer:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
@@ -159,7 +164,8 @@ getNameLoop:
 	lw    $ra, ($sp)
 	addiu $sp, $sp, 4
 	jr    $ra
-#########################################
-#					#
+#########################################################
+# -Intercepta um caractere enviado pelo MMIO Keyboard	#
+# @return $v0 : Valor ASCII do caractere		#
 msg_Prologue:
 	jr    $ra
