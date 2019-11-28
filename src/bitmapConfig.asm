@@ -10,8 +10,6 @@ bitmapDisplay_Configuration:
 	sw    $ra, ($sp)
 	
 	jal   gen_Background
-	jal   gen_HealthPoints
-	jal   gen_ManaPoints
 genOnlyRoomPar:
 	jal   gen_Room
 	jal   gen_En
@@ -20,17 +18,15 @@ genOnlyRoomPar:
 	addiu $sp, $sp, 4
 	jr    $ra
 
-#########################################
-# Gera o background inicial		#
+#########################################################
+# Gera o background inicial no Bitmap Display		#
 gen_Background:				#
 	li    $t0, 0x10040000		# Buffer para preencher fundo
-	li    $t1, 48			# Numero de pixels preenchidos
 	li    $t2, 3			# Divisor do random int
 	li    $t4, 0			# Valor zerado
 	li    $t5, 0x452500		# Cores do background
 	li    $t6, 0x663E11
 	li    $t7, 0x42311F
-	li    $t8, 0xFFFFFF
 	li    $v0, 41			# Random int code
 bgLoop:
 	syscall	
@@ -39,97 +35,19 @@ bgLoop:
 	beq   $t3, 0, bgColor1
 	beq   $t3, 1, bgColor2
 	sw    $t5, ($t0)	
-	j     bgNext1
+	j     bgNext
 bgColor1:
 	sw    $t6, ($t0)
-	j     bgNext1
+	j     bgNext
 bgColor2:
 	sw    $t7, ($t0)
-bgNext1:
-	div   $t4, $t1			# Pula caso seja a area do painel
-	beqz  $t4, bgNext2
-	mfhi  $t3
-	beqz  $t3, bgSkipStatus
+bgNext:
 	add   $t0, $t0, 4		# Incrementa o buffer
-bgNext2:
 	add   $t4, $t4, 1		# Incrementa para o proximo pixel
-	blt   $t4, 1537, bgLoop		# Checa se preencheu toda a area do mapa
+	blt   $t4, 2076, bgLoop		# Checa se preencheu toda a area do mapa
 	jr    $ra
-bgSkipStatus:
-	add   $t0, $t0, 68
-	j     bgNext2			#
-#########################################
-# Gera o desenho inicial dos HP		#
-gen_HealthPoints:			#
-	li    $t0, 0x10040000		# Carrega o buffer para desenhar a vida inicial
-	add   $t0, $t0, 464
-	li    $t1, 0xFF0000		# Cores da vida
-	li    $t2, 0xD3A4A4
-	li    $t3, 14			# Comeca a desenhar a vida
-HPLoop1:
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 252
-	add   $t3, $t3, -1
-	bnez  $t3, HPLoop1
-	li    $t3, 6
-	add   $t0, $t0, -4
-HPLoop2:
-	sw    $t2, ($t0)	
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t2, ($t0)
-	add   $t0, $t0, 244
-	add   $t3, $t3, -1
-	bnez  $t3, HPLoop2
-	li    $t3, 4
-HPLoop3:
-	sw    $t2, ($t0)
-	add   $t0, $t0, 4
-	add   $t3, $t3, -1
-	bnez  $t3, HPLoop3
-	jr    $ra
-#########################################
-# Gera o desenho inicial dos MP		#
-gen_ManaPoints:			#
-	li    $t0, 0x10040000		# Carrega o buffer para desenhar a mana inicial
-	add   $t0, $t0, 488
-	li    $t1, 0x000FFF		# Cores da mana
-	li    $t2, 0xAAAFFF
-	li    $t3, 14			# Comeca a desenhar a mana
-MPLoop1:
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 252
-	add   $t3, $t3, -1
-	bnez  $t3, MPLoop1
-	li    $t3, 6
-	add   $t0, $t0, -4
-MPLoop2:
-	sw    $t2, ($t0)
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t1, ($t0)
-	add   $t0, $t0, 4
-	sw    $t2, ($t0)
-	add   $t0, $t0, 244
-	add   $t3, $t3, -1
-	bnez  $t3, MPLoop2
-	li    $t3, 4
-MPLoop3:
-	sw    $t2, ($t0)
-	add   $t0, $t0, 4
-	add   $t3, $t3, -1
-	bnez  $t3, MPLoop3
-	jr    $ra
-#########################################
-# Gera a sala da dungeon		#
+#########################################################
+# Gera o chão e as paredas da sala			#
 gen_Room:				#
 	li    $t0, 0x10040000		# Buffer
 	add   $t0, $t0, 1032
