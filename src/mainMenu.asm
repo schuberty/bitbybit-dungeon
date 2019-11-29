@@ -1,18 +1,19 @@
 .globl display_Menus,MMIO_sendToDisplay,MMIO_sendChar,MMIO_getChar,selectedOpt,printSelection
 
 .data
+# Data com strings que aparecem nos dialogs inicias
 stringWelcome:	.asciiz "        Bit by Bit: A Dungeon Game\n\n            Trabalho Final de AOC I\nDesenvolvido por: Gabriel Schubert M."
 stringConfig:	.ascii  "    Settings do MARS necessárias,\nfora do padrão:\n\n1. Assemble all files in directory;\n2. Initialize Program Counter to\n  global \"main\" if defined;\n3. Self-modifying code."
 		.asciiz	"\n\n    Tools necessárias:\n1. Bitmap Display conectado tendo:\n   - Unit Width e Height em 8;\n   - Display Width em 512;\n   - Display Height em 256;\n   - Base address na HEAP.\n2. MMIO Simulator conectado."
-stringMMIO:	.ascii  "    Modo de uso do Keyboard MMIO Simulator:\n1. Teclas W e S para movimentação vertical;\n2. Teclas A e D para movimentação horizental;\n3. Tecla E para enter ou ação;\n4. Tecla Q para voltar ou parar movimentação."
+stringMMIO:	.ascii  "    Modo de uso do Keyboard MMIO Simulator:\n1. Teclas W e S para movimentação vertical;\n2. Teclas A e D para movimentação horizental;\n3. Tecla ESPAÇO para enter ou ação."
 		.asciiz "\n\n                          BOM JOGO!"
-
+# Data com strings que aparecem no menu principal
 menuHeader:	.asciiz "\tBit by Bit Dungeon MENU:\n\n"
 menuOpt1:	.asciiz "\t   Entrar na Masmorra\n"
 menuOpt2:	.asciiz "\t Selecionar Dificuldade\n"
 menuOpt3:	.asciiz "\t      Sair do Menu\n\n Dificuldade atual : "
 selectedOpt:	.asciiz "      >"
-
+# Data com strings do menu de seleção de dificuldade
 diffMenuHeader:	.asciiz "\tSelecione a dificuldade:\n\n"
 diffMenuOpt1:	.asciiz "\t       Fácil\n"
 diffMenuOpt2:	.asciiz "\t       Médio\n"
@@ -26,14 +27,12 @@ diffHard:	.asciiz "Difícil"
 playerGetName:	.asciiz ""
 playerGetColor: .asciiz ""
 
-
-
 .text
 display_Menus:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
 	
-#	jal   msg_Config
+	jal   msg_Config
 	jal   MMIO_MainMenu
 	
 	lw    $ra, ($sp)
@@ -80,27 +79,26 @@ MMIO_MainMenu:
 		jal printSelection
 		la    $a1, menuOpt3
 		jal   MMIO_sendToDisplay
-		jal   printDifficult
-		# Mostra a dificuldade no menu principal
+		jal   printDifficult			# Mostra a dificuldade no menu principal
+		anyMainKeySelected:
 		jal   MMIO_getChar			# Pega o char digitado pelo MMIO Keyboard
-		beq   $v0, 'e', mainKeyEnter		# Checa qual foi para executar uma ação
-		beq   $v0, 'E', mainKeyEnter
+		beq   $v0, ' ', mainKeyEnter		# Checa qual foi o char digitado para executar uma ação
 		beq   $v0, 'w', mainKeyUp
 		beq   $v0, 'W', mainKeyUp
 		beq   $v0, 's', mainKeyDown
 		beq   $v0, 'S', mainKeyDown
-	j     mainMenuSelection				# Loop até o topo
+	j     anyMainKeySelected			# Loop até um char válido ser digitado
 	
 
 #-------#################################################
 	# -Ações dependendo do char selecionado		#
 	# @param $t3 : int, posição no menu		#
 	mainKeyDown:					# Posiciona a seta para baixo, se não for o limite
-	bge   $t3, 3, mainMenuSelection			# Se for o limite no menu
+	bge   $t3, 3, anyMainKeySelected		# Se for o limite no menu
 	add   $t3, $t3, 1				# Se não for, incrementa o registrador do menu
 	j     mainMenuSelection				# Volta pro menu
 	mainKeyUp:					# Posiciona a seta para cima, se não for o limite
-	ble   $t3, 1, mainMenuSelection
+	ble   $t3, 1, anyMainKeySelected
 	add   $t3, $t3, -1
 	j     mainMenuSelection
 	mainKeyEnter:					# Executa a opção atual selecionada
@@ -136,15 +134,14 @@ MMIO_DifficultMenu:
 		jal   printSelection
 		la    $a1, diffMenuBack
 		jal   MMIO_sendToDisplay
+		anyDiffKeySelected:
 		jal   MMIO_getChar			# Pega o char digitado pelo MMIO Keyboard
-		beq   $v0, 'e', diffKeyEnter		# Checa qual foi para executar uma ação
-		beq   $v0, 'E', diffKeyEnter
+		beq   $v0, ' ', diffKeyEnter		# Checa qual foi o char digitado para executar uma ação
 		beq   $v0, 'w', diffKeyUp
 		beq   $v0, 'W', diffKeyUp
 		beq   $v0, 's', diffKeyDown
 		beq   $v0, 'S', diffKeyDown
-			
-	j     difficultSelection
+	j     anyDiffKeySelected
 	diffBackOption:					# Volta para o menu principal
 	li    $t3, 1					# Local da seta no menu principal
 	lw    $ra, ($sp)				# Atualiza a pilha
@@ -154,11 +151,11 @@ MMIO_DifficultMenu:
 	# -Ações dependendo do char selecionado		#
 	# @param $t3 : int, posição no menu		#
 	diffKeyDown:					# Posiciona a seta para baixo, se não for o limite
-	bge   $t3, 4, difficultSelection		# Se for o limite no menu
+	bge   $t3, 4, anyDiffKeySelected		# Se for o limite no menu
 	add   $t3, $t3, 1				# Se não for, incrementa o registrador do menu
 	j     difficultSelection			# Volta pro menu
 	diffKeyUp:					# Posiciona a seta para cima, se não for o limite
-	ble   $t3, 1, difficultSelection
+	ble   $t3, 1, anyDiffKeySelected
 	add   $t3, $t3, -1
 	j     difficultSelection
 	diffKeyEnter:					# Executa a opção atual selecionada
