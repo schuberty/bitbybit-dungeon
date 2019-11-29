@@ -1,10 +1,12 @@
 .globl main,stop,zeroAll
-.globl playerName
+.globl gameSettings,playerName
 
 .data
-playerName:	.space 64
-#		     [HP,MP,Shield,NumHammers,ifHelmet,ifBody,ifLegs,ifShoes,ifSword,ifSpell]
-playerAtt:	.word 20, 20, 0, 0, 0, 0, 0, 0, 0, 0
+# Vetor de configs.: {dificuldade, salaAtual,
+gameSettings:	.word      2     ,    1
+# Vetor do jogador:  {vidaMax, manaMax, ataqueMin, ataqueMax, defesaBase, defesaMaxGain, vitórias}
+playerSettings:	.word    10  ,    5   ,     3    ,      6   ,     0     ,       2      ,    0
+playerName:	.asciiz "Gabriel"
 .text
 main:
 	jal  display_Menus
@@ -15,8 +17,7 @@ main:
 	jal  stop
 	
 #########################################################
-# Function que zera todos os valores de registradores	#
-#							#
+# -Function que zera todos os valores de registradores	#
 zeroAll:
 	li   $v0, 0
 	li   $v1, 0
@@ -31,19 +32,11 @@ zeroAll:
 	li   $t5, 0
 	li   $t6, 0
 	li   $t7, 0
-	li   $s0, 0
-	li   $s1, 0
-	li   $s2, 0
-	li   $s3, 0
-	li   $s4, 0
-	li   $s5, 0
-	li   $s6, 0
-	li   $s7, 0
 	li   $t8, 0
 	li   $t9, 0
 	jr   $ra
-#########################################
-# Para o programa			#
+#########################################################
+# -Para o funcionamento do programa com syscall		#
 stop:
 	li   $v0, 17
 	syscall
