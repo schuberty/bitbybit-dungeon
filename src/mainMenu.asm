@@ -2,11 +2,11 @@
 
 .data
 # Data com strings que aparecem nos dialogs inicias
-stringWelcome:	.asciiz "        Bit by Bit: A Dungeon Game\n\n            Trabalho Final de AOC I\nDesenvolvido por: Gabriel Schubert M."
+stringWelcome:	.asciiz "        Bit by Bit: A Dungeon Game\n\n            Trabalho Final de AOC I\nBase Desenvolvida por: Gabriel Schubert M."
 stringConfig:	.ascii  "    Settings do MARS necessárias,\nfora do padrão:\n\n1. Assemble all files in directory;\n2. Initialize Program Counter to\n  global \"main\" if defined;\n3. Self-modifying code."
 		.asciiz	"\n\n    Tools necessárias:\n1. Bitmap Display conectado tendo:\n   - Unit Width e Height em 8;\n   - Display Width em 512;\n   - Display Height em 256;\n   - Base address na HEAP.\n2. MMIO Simulator conectado."
 stringMMIO:	.ascii  "    Modo de uso do Keyboard MMIO Simulator:\n1. Teclas W e S para movimentação vertical;\n2. Teclas A e D para movimentação horizental;\n3. Tecla ESPAÇO para enter ou ação."
-		.asciiz "\n\n                          BOM JOGO!"
+		.asciiz "\n\n                 BOM DESENVOLVIMENTO!"
 # Data com strings que aparecem no menu principal
 menuHeader:	.asciiz "\tBit by Bit Dungeon MENU:\n\n"
 menuOpt1:	.asciiz "\t   Entrar na Masmorra\n"
@@ -24,8 +24,29 @@ diffEasy:	.asciiz "Fácil"
 diffNormal:	.asciiz "Médio"
 diffHard:	.asciiz "Difícil"
 
-playerGetName:	.asciiz ""
-playerGetColor: .asciiz ""
+startPrologue1:	.ascii  "ARRRRRGh - um grito ecoa pelos tuneis da mina.\n\n"
+		.ascii  "Quando uma cena de seu companheiro de trabalho jogado no chão\n"
+		.ascii  "e uma pilha de entulho e pedras sobre ele lhe apavora...\n\n"
+		.ascii  "Desesperado, chegas perto dele e com um susurro ele lhe diz:\n"
+		.asciiz " - Qual.... qual teu nome....\n"
+getPlayerName:	.asciiz "Digite o nome do personagem:"
+startPrologue2: .ascii  "Em um segundo após sua última frase, seu companheiro perde a vida\n"
+		.ascii  "diante de seus olhos.\n\n"
+		.ascii  "\"Penso que ele poderia ter algo tão melhor para me perguntar, mas ok\"\n\n"
+		.ascii  "Em seu bolso há um papal, rasgado e mal cuidado, com instruções para chegar\n"
+		.ascii  "até o que parece ser um galpão subterraneo, uma masmorra talvez.\n\n"
+		.ascii  "\"Ah.. to preso aqui mesmo, a 200 metros abaixo da superficie... nada pra fazer...\n"
+		.asciiz " vou seguir esse papel mesmo e ver no que da...\""
+startPrologue3: .ascii  "Esquerda... direita... direita... reto... esquerda... pula e cai... direita...\n\n"
+		.ascii  "\"\Aah... Finalmente... achei a entrada, vamos ver o que diz nas instruções antes de entrar\"\n\n"
+		.ascii  "A MASMORRA SECRETA DO ANGLO, seja lá com quem esteja este pedaço de papel saiba que estas em apuros\n"
+		.ascii  " cuidado  com as sombras que encontrarás na caverna\n\t\t os olhos   vermelhor   uuuuuh CUIDADO.\n"
+		.ascii  "  se tu, se tu achar, achar uma escada, pega ela e cava pra cima, cada vez estarás\n"
+		.ascii "\t\t\t\t\t\tmais perto da superfiiiiicie, e tenha cuidado com o ...\n\n\t\t\t no final..\n\n"
+		.asciiz  "\"É... entendi foi nada, mas vou entrar nesse buracao aqui, o que poderia dar errado...\""
+pressToNext:	.asciiz "\n\nPressione qualquer tecla para continuar..."
+
+num:		.word 0
 
 .text
 display_Menus:
@@ -34,6 +55,7 @@ display_Menus:
 	
 	jal   msg_Config
 	jal   MMIO_MainMenu
+	jal   MMIO_Prologue
 	
 	lw    $ra, ($sp)
 	addiu $sp, $sp, 4
@@ -88,8 +110,6 @@ MMIO_MainMenu:
 		beq   $v0, 's', mainKeyDown
 		beq   $v0, 'S', mainKeyDown
 	j     anyMainKeySelected			# Loop até um char válido ser digitado
-	
-
 #-------#################################################
 	# -Ações dependendo do char selecionado		#
 	# @param $t3 : int, posição no menu		#
@@ -203,6 +223,53 @@ printSelection:
 	addiu $sp, $sp, 4
 	jr    $ra					# Retorno da pilha
 #########################################################
+# -Mostra o prologo do jogo no MMIO Display		#
+MMIO_Prologue:
+	addiu $sp, $sp, -4				# Pilha para o retorno
+	sw    $ra, ($sp)
+	
+	li    $t0, 0xffff000C				# MMIO Display 
+	li    $t1, 12
+	sw    $t1, ($t0)				# Clear
+	
+	la    $a1, startPrologue1
+	jal   MMIO_sendToDisplay
+	li    $v0, 32
+	li    $a0, 5000
+	syscall
+	
+	li    $v0, 54
+	la    $a0, getPlayerName
+	la    $a1, playerName
+	li    $a2, 59
+	syscall
+	
+	sw    $t1, ($t0)
+	la    $a1, startPrologue2
+	jal   MMIO_sendToDisplay
+	li    $v0, 32
+	li    $a0, 5000
+	syscall
+	la    $a1, pressToNext
+	jal   MMIO_sendToDisplay
+	jal   MMIO_getChar
+	
+	sw    $t1, ($t0)
+	la    $a1, startPrologue3
+	jal   MMIO_sendToDisplay
+	li    $v0, 32
+	li    $a0, 5000
+	syscall
+	la    $a1, pressToNext
+	jal   MMIO_sendToDisplay
+	jal   MMIO_getChar
+	
+	
+	lw    $ra, ($sp)				# Retorno da pilha
+	addiu $sp, $sp, 4
+	jr    $ra
+
+#########################################################
 # -Percorre uma string para enviar ao MMIO Display	#
 # @param $a1 : string 					#
 MMIO_sendToDisplay:					#
@@ -238,4 +305,3 @@ MMIO_sendToDisplay:					#
 		beqz  $a2, inputReady			# Se não estiver, volta até estar (método sem input lag)
 		lw    $v0, 4($a1)			# Salva o char digitado em $v0
 		jr    $ra				# Retorna
-#########################################################

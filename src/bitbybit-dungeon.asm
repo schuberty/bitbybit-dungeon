@@ -1,12 +1,12 @@
 .globl main,stop,zeroAll
-.globl gameSettings,playerName
+.globl gameSettings,playerSettings,playerName
 
 .data
-# Vetor de configs.: {dificuldade, salaAtual,
-gameSettings:	.word      2     ,    1
-# Vetor do jogador:  {vidaMax, manaMax, ataqueMin, ataqueMax, defesaBase, defesaMaxGain, vitórias}
-playerSettings:	.word    10  ,    5   ,     3    ,      6   ,     0     ,       2      ,    0
-playerName:	.asciiz "Gabriel"
+# Vetor de configs.: {dificuldade, salaAtual, decrementadorSala, vitorias
+gameSettings:	.word      2     ,    1     ,         0        ,    0
+# Vetor do jogador:  {vida ,  vidaMax,  mana  ,manaMax, ataqueMin, ataqueMax, defesaBase, defesaMax, exp, expNextLevel, temEscada}
+playerSettings:	.word  10  ,   20    ,   5    ,   5   ,     3    ,      6   ,     0     ,     2    ,  0 ,      50     ,     3
+playerName:	.space 60
 .text
 main:
 	jal  display_Menus

@@ -23,10 +23,18 @@ seatedOpt1:	.asciiz "\t    Descansar\n"
 seatedOpt2:	.asciiz "\t   Levantar-se\n"
 seatedOpt3:	.asciiz "\t  Usar a escada\n"
 seatedOpt4:	.asciiz "\t Aceitar a morte\n"
+actionRest:	.asciiz "\n Mana restaurada e sombras moveram-se"
+actionLadder:	.asciiz "\n Cavando para cima, botando escada e subindo para a glória!"
+actionNoLadder:	.asciiz "\n Nenhuma escada no inventario... opss"
 
 # Data com vetores contendo configurações de inimigos, sendo seguida de uma string com o nome do inimigo
-# Vetor de inimigos: {vidaMax, ataqueMin, ataqueMax, expDada, habilidade }
-enemyThief:	.word    5   ,    0     ,     4    ,    15  ,     0
+enemyList:	.word   enemyRat, enemyBelzebu
+# Vetor de inimigos: {vidaMax, ataqueMin, ataqueMax, expDada, dropEscada, habilidade }
+enemyRat:	.word    5   ,    0     ,     4    ,    15  ,     10    ,     0
+		.asciiz "Rato da Noruega"
+enemyBelzebu:	.word    15  ,    2     ,     8    ,    30  ,     6     ,     0
+		.asciiz "Belzebu"
+
 
 .text
 start_Game:
@@ -207,13 +215,15 @@ Player_Movement:
 		j     keepMoving2			# Retorna
 #########################################################
 # -Menu para quando o jogador se sentar			#
+# @param $t3 : valor da seleção
 sitOnFloor:
 	addiu $sp, $sp, -4
 	sw    $ra, ($sp)
-	
+
+	li    $t3, 1
+	staySeated:
 	lui   $t0, 0xffff				# Igual á todos os outros menus de seleção
 	li    $t1, 12
-	li    $t3, 1
 	seatedSelection:
 		sw    $t1, 12($t0)
 		la    $a1, beginHeader
@@ -265,20 +275,62 @@ sitOnFloor:
 	add   $t3, $t3, -1
 	j     seatedSelection
 	seatedKeyEnter:					# Executa a opção atual selecionada
+	beq   $t3, 1, doRest
+	beq   $t3, 3, useLadder
 	j     standUp					# Se for 2, se levanta
+#-------#################################################
+	# -Descansar					#
+	# @param $t3 : int, posição no menu		#
+	doRest:
+	lw    $t0, playerSettings+12			# Carrega mana max
+	sw    $t0, playerSettings+8			# Recarrega a managameSettings
+	lw    $t0, gameSettings+8			# Decrementador das sombras da sala
+	add   $t0, $t0, 1
+	sw    $t0, gameSettings+8
+	la    $a1, actionRest
+	jal   MMIO_sendToDisplay
+	li    $v0, 32
+	li    $a0, 1750
+	syscall
+	jal   gen_Room
+	
+	j     standUp
+#-------#################################################
+	# -Usar a escada				#
+	# @param $t3 : int, posição no menu		#
+	useLadder:
+	lw    $t0, playerSettings+40
+	bnez  $t0, placeLadder				# Se não tiver escada
+	la    $a1, actionNoLadder
+	jal   MMIO_sendToDisplay
+	li    $v0, 32
+	li    $a0, 1750
+	syscall
+	j     staySeated
+	placeLadder:					# Se tiver escada
+	add   $t0, $t0, -1				# Decrementa quantidade de escadas
+	sw    $t0, playerSettings+40
+	lw    $t0, gameSettings+8			# Valor da quantidade de sombras
+	beqz  $t0, continueLadder
+	add   $t0, $t0, -1				# Diminui ao passar de sala se não for zero já
+	sw    $t0, gameSettings+8
+	continueLadder:
 
+	jal   nextRoom					# Atualiza o mapa
+	jal   gen_Room					# E gera a sala
+	j     standUp
+	
 #########################################################
 # -Inicia o combate com um inimigo			#
 # @return : quando o jogador ou o inimigo morre		#
 Enter_Battle:
 	addiu $sp, $sp, -4				# Pilha para o retorno
 	sw    $ra, ($sp)
-
-	lui   $t0, 0xffff
+	
 	li    $t1, 12
 	li    $t3, 1
 	battleMenuSelection:
-	sw    $t1, 12($t0)
+	sw    $t1, 0xffff000c
 	la    $a1, beginHeader
 	jal   MMIO_sendToDisplay
 	la    $a1, playerName
@@ -301,6 +353,7 @@ Enter_Battle:
 	jal   printSelection
 	la    $a1, battleOpt4
 	jal   MMIO_sendToDisplay
+	jal   printBattleInfo
 	anyBattleKeySelected:
 	jal   MMIO_getChar
 	beq   $v0, ' ', keyEnter
@@ -322,7 +375,7 @@ Enter_Battle:
 	j     battleMenuSelection
 	keyEnter:
 	beq   $t3, 1, attackEnemy
-#	beq   $t4, 2, magicMenu
+	beq   $t4, 2, getShield
 	beq   $t3, 3, tryEscape
 	beq   $t3, 4, keyExit
 	tryEscape:
@@ -332,9 +385,15 @@ Enter_Battle:
 	lw    $ra, ($sp)				# Retorno da pilha
 	addiu $sp, $sp 4
 	jr    $ra
-
+#-------#################################################
+	# -Mostra as informações do inimigo e jogador	#
+	printBattleInfo:
+	jr    $ra
+#-------#################################################
+	# -Adiciona escudo ao jogador			#
+	getShield:
+	j     anyBattleKeySelected
 #-------#################################################
 	# -Realiza o ataque no inimigo			#
 	attackEnemy:
-		
-		j     battleMenuSelection
+	j     anyBattleKeySelected

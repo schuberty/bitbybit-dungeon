@@ -1,4 +1,4 @@
-.globl bitmapDisplay_Configuration,genNextRoom,nextRoom
+.globl bitmapDisplay_Configuration,genNextRoom,nextRoom,gen_Room
 
 .data
 actualRmColor:	.word 0xFFF93F
@@ -81,7 +81,12 @@ gen_Room:
 	li    $t1, 0x47475D				# Cor da parede da sala
 	li    $t2, 0xB8B06C				# Cor de chão normal
 	li    $t3, 0xA59E62				# Cor de chão no escuro
-	li    $t4, 8					# Dividor do random int gerado é a probabilidade de ter chão escuro [2,10]
+	li    $t4, 15					# Dividor do random int gerado é a probabilidade de ter chão escuro [2,20]
+	lw    $t6, gameSettings+8
+	sub   $t4, $t4, $t6
+	bgt   $t4, 2, skipZero
+	li    $t4, 2
+	skipZero:
 	li    $t6, 24					# Quantidade de linhas para chão entre as paredes laterais
 	roomLoop1:
 		sw    $t1, ($t0)			# Pixel da primeira parede lateral esquerda
@@ -120,7 +125,7 @@ gen_Room:
 #-------#################################################
 	# -Atualiza dados e o mapa para a próxima sala	#
 	nextRoom:
-	lui    $t0, 0x1004				# Buffer do Bitmap Display
+	lui   $t0, 0x1004				# Buffer do Bitmap Display
 	add   $t0, $t0, 260				# Incrementa para 12 bits antes da primeira unidade da primeira sala
 	lw    $t1, gameSettings+4			# Sala atual
 	mul   $t1, $t1, 12				# Multiplica para pegar o endereço da sala atual
@@ -136,9 +141,10 @@ gen_Room:
 	sw    $t8, 4($t0)
 	sw    $t8, 256($t0)
 	sw    $t8, 260($t0)
-	lw    $t1, gameSettings+4
+	lw    $t1, gameSettings+4			# Atualiza a sala atual
 	add   $t1, $t1, 1
 	sw    $t1, gameSettings+4
+	jr    $ra					# Retorna
 	
 	
 	
